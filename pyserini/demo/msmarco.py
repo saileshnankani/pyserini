@@ -21,6 +21,8 @@ from pyserini.search import SimpleSearcher
 from pyserini.dsearch import SimpleDenseSearcher, TctColBertQueryEncoder, AnceQueryEncoder
 from pyserini.hsearch import HybridSearcher
 
+from functools import cache
+
 
 class MsMarcoDemo(cmd.Cmd):
     ssearcher = SimpleSearcher.from_prebuilt_index('msmarco-passage')
@@ -30,6 +32,26 @@ class MsMarcoDemo(cmd.Cmd):
 
     k = 10
     prompt = '>>> '
+
+    @cache
+    def get_searchers(self, arg):
+        if arg == "tct":
+            encoder = TctColBertQueryEncoder("castorini/tct_colbert-msmarco")
+            index = "msmarco-passage-tct_colbert-hnsw"
+        elif arg == "ance":
+            encoder = AnceQueryEncoder("castorini/ance-msmarco-passage")
+            index = "msmarco-passage-ance-bf"
+        else:
+            print(
+                f"Invalid argument {arg}. model should be one of [tct, ance]")
+            return None
+
+        dsearcher = SimpleDenseSearcher.from_prebuilt_index(
+            index,
+            encoder
+        )
+        hsearcher = HybridSearcher(dsearcher, self.searcher)
+        return (dsearcher, hsearcher)
 
     # https://stackoverflow.com/questions/35213134/command-prefixes-in-python-cli-using-cmd-in-pythons-standard-library
     def precmd(self, line):
@@ -69,22 +91,7 @@ class MsMarcoDemo(cmd.Cmd):
         print(f'setting retriver = {arg}')
 
     def do_model(self, arg):
-        if arg == "tct":
-            encoder = TctColBertQueryEncoder("castorini/tct_colbert-msmarco")
-            index = "msmarco-passage-tct_colbert-hnsw"
-        elif arg == "ance":
-            encoder = AnceQueryEncoder("castorini/ance-msmarco-passage")
-            index = "msmarco-passage-ance-bf"
-        else:
-            print(
-                f"Invalid argument {arg}. model should be one of [tct, ance]")
-            return
-
-        self.dsearcher = SimpleDenseSearcher.from_prebuilt_index(
-            index,
-            encoder
-        )
-        self.hsearcher = HybridSearcher(self.dsearcher, self.ssearcher)
+        self.dsearcher, self.hsearcher = self.get_searchers(arg)
         print(f'setting model = {arg}')
 
     def do_EOF(self, line):
