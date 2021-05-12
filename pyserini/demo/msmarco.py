@@ -21,7 +21,7 @@ from pyserini.search import SimpleSearcher
 from pyserini.dsearch import SimpleDenseSearcher, TctColBertQueryEncoder, AnceQueryEncoder
 from pyserini.hsearch import HybridSearcher
 
-from functools import cache
+from functools import lru_cache
 
 
 class MsMarcoDemo(cmd.Cmd):
@@ -33,7 +33,7 @@ class MsMarcoDemo(cmd.Cmd):
     k = 10
     prompt = '>>> '
 
-    @cache
+    @lru_cache
     def get_searchers(self, arg):
         if arg == "tct":
             encoder = TctColBertQueryEncoder("castorini/tct_colbert-msmarco")
