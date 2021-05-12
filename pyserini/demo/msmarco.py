@@ -33,7 +33,7 @@ class MsMarcoDemo(cmd.Cmd):
     k = 10
     prompt = '>>> '
 
-    @lru_cache
+    @lru_cache(maxsize=None)
     def get_searchers(self, arg):
         if arg == "tct":
             encoder = TctColBertQueryEncoder("castorini/tct_colbert-msmarco")
